@@ -3,16 +3,69 @@
    ============================================================ */
 
 // ── SCROLL REVEAL ────────────────────────────────────────────
-const observer = new IntersectionObserver((entries) => {
+const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach(e => {
     if (e.isIntersecting) {
       e.target.classList.add('visible');
-      observer.unobserve(e.target);
+      revealObserver.unobserve(e.target);
     }
   });
-}, { threshold: 0.15 });
+}, { threshold: 0.12 });
 
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ── ANIMATED COUNTERS ────────────────────────────────────────
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target, 10);
+  const duration = 1400;
+  const step = 16;
+  const increment = target / (duration / step);
+  let current = 0;
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= target) {
+      el.textContent = target;
+      clearInterval(timer);
+    } else {
+      el.textContent = Math.floor(current);
+    }
+  }, step);
+}
+
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.count[data-target]').forEach(animateCounter);
+      counterObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+const statsRow = document.querySelector('.stats-row');
+if (statsRow) counterObserver.observe(statsRow);
+
+// ── NAVIGATION SCROLL STATE ──────────────────────────────────
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 60);
+}, { passive: true });
+
+// ── HAMBURGER MENU ───────────────────────────────────────────
+const hamburger = document.getElementById('hamburger');
+const navLinks  = document.getElementById('navLinks');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  navLinks.classList.toggle('open');
+});
+
+// Close nav when a link is clicked
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    hamburger.classList.remove('open');
+    navLinks.classList.remove('open');
+  });
+});
 
 // ── MODALS ───────────────────────────────────────────────────
 function openModal(id) {
@@ -25,14 +78,12 @@ function closeModal(id) {
   document.body.style.overflow = '';
 }
 
-// Close on backdrop click
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
     if (e.target === overlay) closeModal(overlay.id);
   });
 });
 
-// Close on Escape key
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m.id));
@@ -58,7 +109,6 @@ function selectPaymentTab(tab) {
 }
 
 // ── FORM SUBMISSION ──────────────────────────────────────────
-// TODO: Wire up to real backend / Stripe
 function submitForm(formId, successId) {
   document.getElementById(formId).style.display = 'none';
   document.getElementById(successId).classList.add('show');
@@ -69,6 +119,6 @@ function subscribeNewsletter() {
   const email = document.getElementById('newsletterEmail');
   if (email.value && email.value.includes('@')) {
     document.getElementById('newsletterForm').innerHTML =
-      '<p style="color: var(--accent); font-weight: 600; padding: 14px 24px;">✓ You\'re subscribed! Welcome to the community.</p>';
+      '<p style="color: var(--accent); font-weight: 700; padding: 14px 24px; letter-spacing: 0.04em;">✓ You\'re subscribed! Welcome to the community.</p>';
   }
 }
